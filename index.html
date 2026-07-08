@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Antel Voley: una app simple para organizar partidos de voley entre amigos."
+    />
+    <title>Antel Voley</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <main class="contenedor">
+      <header class="encabezado">
+        <p class="etiqueta">Organizador local</p>
+        <h1>Antel Voley</h1>
+        <p class="descripcion">Para ponernos de acuerdo</p>
+      </header>
+
+      <section class="panel" aria-labelledby="titulo-nombre">
+        <div>
+          <h2 id="titulo-nombre">Tu nombre</h2>
+          <p class="texto-ayuda">Se guarda solo en este navegador.</p>
+        </div>
+
+        <label class="campo">
+          <span>Nombre</span>
+          <input
+            id="nombre"
+            type="text"
+            autocomplete="name"
+            placeholder="Ej: Rodrigo"
+          />
+        </label>
+      </section>
+
+      <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
+
+      <section class="panel" aria-labelledby="titulo-horarios">
+        <div>
+          <h2 id="titulo-horarios">Horarios posibles</h2>
+          <p class="texto-ayuda">Marcá cuándo podés jugar.</p>
+        </div>
+
+        <div id="lista-horarios" class="grilla-horarios"></div>
+      </section>
+
+      <section class="panel resumen" aria-labelledby="titulo-resumen">
+        <div class="resumen-cabecera">
+          <div>
+            <h2 id="titulo-resumen">Tu disponibilidad</h2>
+            <p id="contador" class="texto-ayuda">Todavía no marcaste horarios.</p>
+          </div>
+          <button id="copiar-resumen" class="boton secundario" type="button">
+            Copiar resumen
+          </button>
+        </div>
+
+        <ul id="seleccionados" class="lista-seleccionados"></ul>
+      </section>
+    </main>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>

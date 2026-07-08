@@ -1,0 +1,244 @@
+:root {
+  --fondo: #f4f7f6;
+  --panel: #ffffff;
+  --texto: #18211f;
+  --texto-suave: #5d6b67;
+  --primario: #087f5b;
+  --primario-oscuro: #056147;
+  --primario-claro: #dff6ef;
+  --borde: #dce5e2;
+  --alerta: #9f3412;
+  --sombra: 0 16px 45px rgba(20, 40, 36, 0.11);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.contenedor {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.encabezado {
+  padding: 18px 2px 8px;
+}
+
+.etiqueta {
+  margin: 0 0 8px;
+  color: var(--primario);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: clamp(2.25rem, 12vw, 4rem);
+  line-height: 1;
+}
+
+h2 {
+  margin-bottom: 4px;
+  font-size: 1.15rem;
+}
+
+.descripcion {
+  margin-bottom: 0;
+  color: var(--texto-suave);
+  font-size: 1.15rem;
+}
+
+.panel {
+  margin-top: 18px;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  box-shadow: var(--sombra);
+}
+
+.texto-ayuda {
+  margin-bottom: 0;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.campo {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  font-weight: 700;
+}
+
+.campo input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  color: var(--texto);
+  background: #fbfdfc;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  outline: none;
+}
+
+.campo input:focus {
+  border-color: var(--primario);
+  box-shadow: 0 0 0 3px rgba(8, 127, 91, 0.16);
+}
+
+.mensaje {
+  min-height: 24px;
+  margin: 12px 2px 0;
+  color: var(--alerta);
+  font-weight: 700;
+}
+
+.mensaje.ok {
+  color: var(--primario-oscuro);
+}
+
+.grilla-horarios {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.tarjeta-horario {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 14px;
+  background: #fbfdfc;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.tarjeta-horario.seleccionado {
+  background: var(--primario-claro);
+  border-color: var(--primario);
+}
+
+.dia {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.hora {
+  color: var(--texto-suave);
+  font-weight: 700;
+}
+
+.boton {
+  min-height: 46px;
+  padding: 11px 14px;
+  color: #ffffff;
+  background: var(--primario);
+  border: 1px solid var(--primario);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.boton:hover,
+.boton:focus-visible {
+  background: var(--primario-oscuro);
+  border-color: var(--primario-oscuro);
+}
+
+.boton:focus-visible {
+  outline: 3px solid rgba(8, 127, 91, 0.24);
+  outline-offset: 2px;
+}
+
+.boton.secundario {
+  color: var(--primario-oscuro);
+  background: #ffffff;
+  border-color: var(--primario);
+}
+
+.boton.secundario:hover,
+.boton.secundario:focus-visible {
+  color: #ffffff;
+  background: var(--primario-oscuro);
+}
+
+.boton.desmarcar {
+  color: var(--primario-oscuro);
+  background: #ffffff;
+}
+
+.resumen-cabecera {
+  display: grid;
+  gap: 14px;
+}
+
+.lista-seleccionados {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+
+.item-seleccionado {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 12px;
+  background: #fbfdfc;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.item-seleccionado strong {
+  display: block;
+}
+
+.vacio {
+  margin: 0;
+  color: var(--texto-suave);
+}
+
+@media (min-width: 620px) {
+  .contenedor {
+    padding-top: 44px;
+  }
+
+  .panel {
+    padding: 22px;
+  }
+
+  .grilla-horarios {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tarjeta-horario,
+  .item-seleccionado,
+  .resumen-cabecera {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
