@@ -1,4 +1,4 @@
-// Editá únicamente este archivo para cambiar participantes, días y horarios.
+// Participantes y horas iniciales. Luego se administran desde el dashboard compartido.
 export const PARTICIPANTES = [
   { id: "rodrigo", nombre: "Rodrigo" },
   { id: "alvaro", nombre: "Alvaro" },
@@ -24,7 +24,7 @@ export const DIAS = [
 
 export const HORAS = ["18:00", "19:00", "20:00", "21:00"];
 
-// Reemplazá estos valores por los que entrega Firebase al registrar la app web.
+// Configuración de la aplicación web entregada por Firebase.
 export const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC4j8n20R8KxPe9jKWQkxHFF6fo5wTaYdY",
 

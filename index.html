@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Antel Voley: planificador semanal para encontrar el mejor horario entre todos."
+      content="Antel Voley: planificador permanente para encontrar el mejor horario entre todos."
     />
     <title>Antel Voley</title>
     <link rel="stylesheet" href="css/style.css" />
@@ -13,24 +13,15 @@
   <body>
     <main class="contenedor">
       <header class="encabezado">
-        <p class="etiqueta">Planificador semanal</p>
+        <p class="etiqueta">Disponibilidad del grupo</p>
         <h1>Antel Voley</h1>
         <p class="descripcion">Encontramos el horario en el que podemos más.</p>
       </header>
 
-      <section class="panel controles" aria-labelledby="titulo-semana">
+      <section class="panel controles" aria-labelledby="titulo-planificacion">
         <div>
-          <h2 id="titulo-semana">Semana</h2>
-          <p id="rango-semana" class="texto-ayuda"></p>
-        </div>
-        <div class="navegacion-semana" aria-label="Cambiar semana">
-          <button id="semana-anterior" class="boton secundario compacto" type="button">
-            <span aria-hidden="true">←</span> Anterior
-          </button>
-          <button id="semana-actual" class="boton secundario compacto" type="button">Esta semana</button>
-          <button id="semana-siguiente" class="boton secundario compacto" type="button">
-            Siguiente <span aria-hidden="true">→</span>
-          </button>
+          <h2 id="titulo-planificacion">Disponibilidad habitual</h2>
+          <p class="texto-ayuda">Esta planificación no vence ni cambia de semana.</p>
         </div>
         <nav class="navegador-dias-movil" aria-label="Elegir día de la semana">
           <span class="titulo-dias-movil">Elegí un día</span>
@@ -64,6 +55,43 @@
 
         <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
         <div id="disponibilidad" class="grilla-contenedor"></div>
+      </section>
+
+      <section class="panel administracion" aria-labelledby="titulo-administracion">
+        <details>
+          <summary id="titulo-administracion">Administrar participantes y horarios</summary>
+          <p class="texto-ayuda ayuda-administracion">
+            Los cambios se comparten con todos. Quitar un elemento solo lo oculta: sus votos no se borran.
+          </p>
+
+          <div class="dashboard">
+            <section aria-labelledby="titulo-participantes">
+              <h3 id="titulo-participantes">Participantes</h3>
+              <form id="form-participante" class="form-administracion">
+                <label for="nuevo-participante">Nombre</label>
+                <div class="fila-formulario">
+                  <input id="nuevo-participante" maxlength="40" placeholder="Ej: Lucía" required />
+                  <button class="boton" type="submit">Agregar</button>
+                </div>
+              </form>
+              <ul id="lista-participantes" class="lista-administracion"></ul>
+            </section>
+
+            <section aria-labelledby="titulo-horas">
+              <h3 id="titulo-horas">Horarios disponibles</h3>
+              <form id="form-hora" class="form-administracion">
+                <label for="nueva-hora">Hora</label>
+                <div class="fila-formulario">
+                  <input id="nueva-hora" type="time" required />
+                  <button class="boton" type="submit">Agregar</button>
+                </div>
+              </form>
+              <ul id="lista-horas" class="lista-administracion"></ul>
+            </section>
+          </div>
+
+          <p id="mensaje-administracion" class="mensaje" role="status" aria-live="polite"></p>
+        </details>
       </section>
 
       <footer class="pie">

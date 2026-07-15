@@ -14,27 +14,40 @@ const contenedorDiasMovil = document.querySelector("#dias-movil");
 const contenedorResultados = document.querySelector("#resultados");
 const contenedorDisponibilidad = document.querySelector("#disponibilidad");
 const resumenResultados = document.querySelector("#resumen-resultados");
-const rangoSemana = document.querySelector("#rango-semana");
 const estadoConexion = document.querySelector("#estado-conexion");
 const mensaje = document.querySelector("#mensaje");
+const formularioParticipante = document.querySelector("#form-participante");
+const inputParticipante = document.querySelector("#nuevo-participante");
+const listaParticipantes = document.querySelector("#lista-participantes");
+const formularioHora = document.querySelector("#form-hora");
+const inputHora = document.querySelector("#nueva-hora");
+const listaHoras = document.querySelector("#lista-horas");
+const mensajeAdministracion = document.querySelector("#mensaje-administracion");
 const consultaMovil = window.matchMedia("(max-width: 719px)");
 
-let semana = obtenerLunes(new Date());
+let participantes = [...PARTICIPANTES];
+let horarios = HORAS.map((etiqueta, orden) => ({
+  id: idDeHora(etiqueta),
+  etiqueta,
+  orden,
+}));
+let configuracionRemota = { participantes: {}, horas: {} };
 let personaSeleccionada = "";
 let diaMovilSeleccionado = "";
 let disponibilidades = {};
 let baseDeDatos = null;
 let apiBaseDeDatos = null;
 let cancelarDisponibilidades = null;
+let cancelarConfiguracion = null;
 let cancelarConexion = null;
 let firebaseDisponible = false;
 
 inicializar();
 
 async function inicializar() {
-  cargarParticipantes();
+  cargarDiasMovil();
+  recuperarPersonaGuardada();
   configurarEventos();
-  actualizarSemanaEnPantalla();
   renderizarTodo();
 
   if (!configuracionFirebaseCompleta()) {
@@ -45,20 +58,7 @@ async function inicializar() {
   await conectarFirebase();
 }
 
-function cargarParticipantes() {
-  PARTICIPANTES.forEach((participante) => {
-    const opcion = document.createElement("option");
-    opcion.value = participante.id;
-    opcion.textContent = participante.nombre;
-    selectorPersona.appendChild(opcion);
-  });
-
-  const personaGuardada = localStorage.getItem(CLAVE_PERSONA);
-  if (PARTICIPANTES.some(({ id }) => id === personaGuardada)) {
-    personaSeleccionada = personaGuardada;
-    selectorPersona.value = personaGuardada;
-  }
-
+function cargarDiasMovil() {
   const idDiaActual = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"][
     new Date().getDay()
   ];
@@ -74,7 +74,15 @@ function cargarParticipantes() {
     boton.addEventListener("click", () => seleccionarDiaMovil(dia.id));
     contenedorDiasMovil.appendChild(boton);
   });
+
   actualizarBotonesDias();
+}
+
+function recuperarPersonaGuardada() {
+  const personaGuardada = localStorage.getItem(CLAVE_PERSONA);
+  if (participantes.some(({ id }) => id === personaGuardada)) {
+    personaSeleccionada = personaGuardada;
+  }
 }
 
 function configurarEventos() {
@@ -93,13 +101,8 @@ function configurarEventos() {
   });
 
   consultaMovil.addEventListener("change", renderizarTodo);
-
-  document.querySelector("#semana-anterior").addEventListener("click", () => cambiarSemana(-7));
-  document.querySelector("#semana-siguiente").addEventListener("click", () => cambiarSemana(7));
-  document.querySelector("#semana-actual").addEventListener("click", () => {
-    semana = obtenerLunes(new Date());
-    cambiarSemana(0);
-  });
+  formularioParticipante.addEventListener("submit", agregarParticipante);
+  formularioHora.addEventListener("submit", agregarHora);
 }
 
 async function conectarFirebase() {
@@ -115,73 +118,166 @@ async function conectarFirebase() {
     firebaseDisponible = true;
 
     escucharEstadoConexion();
-    escucharSemana();
+    await prepararConfiguracionCompartida();
+    await migrarDisponibilidadActual();
+    escucharConfiguracion();
+    escucharDisponibilidad();
   } catch (error) {
     console.error("No se pudo iniciar Firebase:", error);
+    firebaseDisponible = false;
     actualizarEstado("Sin conexión", "error");
     resumenResultados.textContent = "No se pudieron cargar los datos compartidos.";
-    mostrarMensaje("Revisá la configuración de Firebase y la conexión a internet.");
-    renderizarDisponibilidad();
+    mostrarMensaje("Revisá la configuración, las reglas de Firebase y la conexión a internet.");
+    renderizarTodo();
   }
 }
 
 function escucharEstadoConexion() {
   if (cancelarConexion) cancelarConexion();
-
-  const referenciaConexion = apiBaseDeDatos.ref(baseDeDatos, ".info/connected");
-  cancelarConexion = apiBaseDeDatos.onValue(referenciaConexion, (snapshot) => {
+  const referencia = apiBaseDeDatos.ref(baseDeDatos, ".info/connected");
+  cancelarConexion = apiBaseDeDatos.onValue(referencia, (snapshot) => {
     actualizarEstado(snapshot.val() ? "En vivo" : "Sin conexión", snapshot.val() ? "conectado" : "error");
   });
 }
 
-function escucharSemana() {
-  if (!firebaseDisponible) return;
-  if (cancelarDisponibilidades) cancelarDisponibilidades();
+async function prepararConfiguracionCompartida() {
+  const referencia = apiBaseDeDatos.ref(baseDeDatos, rutaConfiguracion());
+  let snapshot = await apiBaseDeDatos.get(referencia);
 
-  disponibilidades = {};
-  renderizarTodo();
-  resumenResultados.textContent = "Cargando disponibilidades…";
+  const configuracionExistente = snapshot.val() || {};
+  const actualizaciones = {};
 
-  const referencia = apiBaseDeDatos.ref(baseDeDatos, rutaSemana());
-  cancelarDisponibilidades = apiBaseDeDatos.onValue(
+  PARTICIPANTES.forEach((participante, orden) => {
+    if (!configuracionExistente.participantes?.[participante.id]) {
+      actualizaciones[`${rutaConfiguracion()}/participantes/${participante.id}`] = {
+        nombre: participante.nombre,
+        activo: true,
+        orden,
+      };
+    }
+  });
+
+  HORAS.forEach((hora, orden) => {
+    if (!configuracionExistente.horas?.[idDeHora(hora)]) {
+      actualizaciones[`${rutaConfiguracion()}/horas/${idDeHora(hora)}`] = {
+        etiqueta: hora,
+        activo: true,
+        orden,
+      };
+    }
+  });
+
+  if (Object.keys(actualizaciones).length) {
+    await apiBaseDeDatos.update(apiBaseDeDatos.ref(baseDeDatos), actualizaciones);
+    snapshot = await apiBaseDeDatos.get(referencia);
+  }
+
+  aplicarConfiguracion(snapshot.val() || {});
+}
+
+async function migrarDisponibilidadActual() {
+  const referenciaNueva = apiBaseDeDatos.ref(baseDeDatos, rutaDisponibilidad());
+  const datosNuevos = await apiBaseDeDatos.get(referenciaNueva);
+  if (datosNuevos.exists()) return;
+
+  const referenciaAnterior = apiBaseDeDatos.ref(baseDeDatos, rutaSemanaAnterior());
+  const datosAnteriores = await apiBaseDeDatos.get(referenciaAnterior);
+  if (!datosAnteriores.exists()) return;
+
+  const actualizaciones = {};
+  Object.entries(datosAnteriores.val() || {}).forEach(([idPersona, seleccion]) => {
+    Object.entries(seleccion || {}).forEach(([idHorario, disponible]) => {
+      if (disponible === true) {
+        actualizaciones[`${rutaDisponibilidad()}/${idPersona}/${idHorario}`] = true;
+      }
+    });
+  });
+
+  if (Object.keys(actualizaciones).length) {
+    await apiBaseDeDatos.update(apiBaseDeDatos.ref(baseDeDatos), actualizaciones);
+  }
+}
+
+function escucharConfiguracion() {
+  if (cancelarConfiguracion) cancelarConfiguracion();
+  const referencia = apiBaseDeDatos.ref(baseDeDatos, rutaConfiguracion());
+  cancelarConfiguracion = apiBaseDeDatos.onValue(
     referencia,
-    (snapshot) => {
-      disponibilidades = snapshot.val() || {};
-      renderizarTodo();
-    },
+    (snapshot) => aplicarConfiguracion(snapshot.val() || {}),
     (error) => {
-      console.error("No se pudo leer la disponibilidad:", error);
-      actualizarEstado("Error de lectura", "error");
-      resumenResultados.textContent = "No se pudo leer esta semana.";
+      console.error("No se pudo leer la configuración:", error);
+      mostrarMensajeAdministracion("No se pudo actualizar la configuración compartida.");
     }
   );
 }
 
-function cambiarSemana(cantidadDias) {
-  semana = sumarDias(semana, cantidadDias);
-  disponibilidades = {};
-  actualizarSemanaEnPantalla();
+function escucharDisponibilidad() {
+  if (cancelarDisponibilidades) cancelarDisponibilidades();
+  const referencia = apiBaseDeDatos.ref(baseDeDatos, rutaDisponibilidad());
+  cancelarDisponibilidades = apiBaseDeDatos.onValue(
+    referencia,
+    (snapshot) => {
+      disponibilidades = snapshot.val() || {};
+      renderizarResultados();
+      renderizarDisponibilidad();
+    },
+    (error) => {
+      console.error("No se pudo leer la disponibilidad:", error);
+      actualizarEstado("Error de lectura", "error");
+      resumenResultados.textContent = "No se pudo leer la disponibilidad.";
+    }
+  );
+}
+
+function aplicarConfiguracion(valor) {
+  configuracionRemota = {
+    participantes: valor.participantes || {},
+    horas: valor.horas || {},
+  };
+
+  participantes = Object.entries(configuracionRemota.participantes)
+    .filter(([, participante]) => participante?.activo === true)
+    .map(([id, participante]) => ({ id, ...participante }))
+    .sort(compararPorOrdenYNombre);
+
+  horarios = Object.entries(configuracionRemota.horas)
+    .filter(([, hora]) => hora?.activo === true)
+    .map(([id, hora]) => ({ id, ...hora }))
+    .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0) || a.etiqueta.localeCompare(b.etiqueta));
+
+  if (personaSeleccionada && !participantes.some(({ id }) => id === personaSeleccionada)) {
+    personaSeleccionada = "";
+    localStorage.removeItem(CLAVE_PERSONA);
+    mostrarMensaje("Tu participante ya no está activo. Elegí otro nombre.");
+  }
+
   renderizarTodo();
-  escucharSemana();
 }
 
 function renderizarTodo() {
+  renderizarSelectorPersonas();
   renderizarResultados();
   renderizarDisponibilidad();
+  renderizarAdministracion();
 }
 
-function seleccionarDiaMovil(idDia) {
-  diaMovilSeleccionado = idDia;
-  actualizarBotonesDias();
-  renderizarTodo();
-}
+function renderizarSelectorPersonas() {
+  const valorAnterior = personaSeleccionada;
+  selectorPersona.replaceChildren();
 
-function actualizarBotonesDias() {
-  contenedorDiasMovil.querySelectorAll(".dia-movil").forEach((boton) => {
-    const estaActivo = boton.dataset.dia === diaMovilSeleccionado;
-    boton.classList.toggle("activo", estaActivo);
-    boton.setAttribute("aria-pressed", String(estaActivo));
+  const opcionInicial = document.createElement("option");
+  opcionInicial.value = "";
+  opcionInicial.textContent = participantes.length ? "Seleccioná tu nombre" : "No hay participantes activos";
+  selectorPersona.appendChild(opcionInicial);
+
+  participantes.forEach((participante) => {
+    const opcion = document.createElement("option");
+    opcion.value = participante.id;
+    opcion.textContent = participante.nombre;
+    selectorPersona.appendChild(opcion);
   });
+
+  selectorPersona.value = participantes.some(({ id }) => id === valorAnterior) ? valorAnterior : "";
 }
 
 function renderizarResultados() {
@@ -190,25 +286,27 @@ function renderizarResultados() {
   const dias = obtenerDiasVisibles();
   const tabla = crearTablaBase("Resultados de coincidencias por día y hora", dias);
 
-  HORAS.forEach((hora) => {
+  horarios.forEach((hora) => {
     const fila = document.createElement("tr");
-    fila.appendChild(crearEncabezadoHora(hora));
+    fila.appendChild(crearEncabezadoHora(hora.etiqueta));
 
     dias.forEach((dia) => {
-      const idHorario = crearIdHorario(dia.id, hora);
-      const personas = conteos[idHorario]?.personas || [];
+      const idHorario = `${dia.id}-${hora.id}`;
+      const personasDisponibles = conteos[idHorario]?.personas || [];
       const celda = document.createElement("td");
       const resultado = document.createElement("div");
-      resultado.className = `resultado-celda${maximo > 0 && personas.length === maximo ? " mejor" : ""}`;
-      resultado.title = personas.length ? personas.join(", ") : "Nadie marcó este horario";
+      resultado.className = `resultado-celda${maximo > 0 && personasDisponibles.length === maximo ? " mejor" : ""}`;
+      resultado.title = personasDisponibles.length
+        ? personasDisponibles.join(", ")
+        : "Nadie marcó este horario";
 
       const cantidad = document.createElement("span");
       cantidad.className = "cantidad";
-      cantidad.textContent = personas.length;
+      cantidad.textContent = personasDisponibles.length;
 
       const nombres = document.createElement("span");
       nombres.className = "nombres";
-      nombres.textContent = personas.length ? personas.join(", ") : "Sin votos";
+      nombres.textContent = personasDisponibles.length ? personasDisponibles.join(", ") : "Sin votos";
 
       resultado.append(cantidad, nombres);
       celda.appendChild(resultado);
@@ -228,12 +326,12 @@ function renderizarDisponibilidad() {
   const seleccionPersona = disponibilidades[personaSeleccionada] || {};
   const sePuedeEditar = Boolean(personaSeleccionada && firebaseDisponible);
 
-  HORAS.forEach((hora) => {
+  horarios.forEach((hora) => {
     const fila = document.createElement("tr");
-    fila.appendChild(crearEncabezadoHora(hora));
+    fila.appendChild(crearEncabezadoHora(hora.etiqueta));
 
     dias.forEach((dia) => {
-      const idHorario = crearIdHorario(dia.id, hora);
+      const idHorario = `${dia.id}-${hora.id}`;
       const seleccionado = seleccionPersona[idHorario] === true;
       const celda = document.createElement("td");
       const boton = document.createElement("button");
@@ -243,7 +341,10 @@ function renderizarDisponibilidad() {
       boton.textContent = seleccionado ? "✓ Puedo" : "—";
       boton.disabled = !sePuedeEditar;
       boton.setAttribute("aria-pressed", String(seleccionado));
-      boton.setAttribute("aria-label", `${dia.nombre} ${hora}: ${seleccionado ? "disponible" : "no disponible"}`);
+      boton.setAttribute(
+        "aria-label",
+        `${dia.nombre} ${hora.etiqueta}: ${seleccionado ? "disponible" : "no disponible"}`
+      );
       boton.addEventListener("click", () => alternarHorario(idHorario, seleccionado));
 
       celda.appendChild(boton);
@@ -256,6 +357,38 @@ function renderizarDisponibilidad() {
   contenedorDisponibilidad.replaceChildren(tabla);
 }
 
+function renderizarAdministracion() {
+  listaParticipantes.replaceChildren();
+  listaHoras.replaceChildren();
+
+  participantes.forEach((participante) => {
+    listaParticipantes.appendChild(
+      crearItemAdministracion(participante.nombre, () => desactivarParticipante(participante.id))
+    );
+  });
+
+  horarios.forEach((hora) => {
+    listaHoras.appendChild(crearItemAdministracion(hora.etiqueta, () => desactivarHora(hora.id)));
+  });
+}
+
+function crearItemAdministracion(etiqueta, alQuitar) {
+  const item = document.createElement("li");
+  item.className = "item-administracion";
+
+  const texto = document.createElement("span");
+  texto.textContent = etiqueta;
+
+  const boton = document.createElement("button");
+  boton.type = "button";
+  boton.className = "boton quitar";
+  boton.textContent = "Quitar";
+  boton.addEventListener("click", alQuitar);
+
+  item.append(texto, boton);
+  return item;
+}
+
 async function alternarHorario(idHorario, estabaSeleccionado) {
   if (!personaSeleccionada) {
     mostrarMensaje("Elegí tu nombre antes de marcar horarios.");
@@ -263,14 +396,9 @@ async function alternarHorario(idHorario, estabaSeleccionado) {
     return;
   }
 
-  if (!firebaseDisponible) {
-    mostrarMensaje("La sincronización todavía no está configurada.");
-    return;
-  }
-
   const referencia = apiBaseDeDatos.ref(
     baseDeDatos,
-    `${rutaSemana()}/${personaSeleccionada}/${idHorario}`
+    `${rutaDisponibilidad()}/${personaSeleccionada}/${idHorario}`
   );
 
   disponibilidades[personaSeleccionada] ||= {};
@@ -279,7 +407,8 @@ async function alternarHorario(idHorario, estabaSeleccionado) {
   } else {
     disponibilidades[personaSeleccionada][idHorario] = true;
   }
-  renderizarTodo();
+  renderizarResultados();
+  renderizarDisponibilidad();
   mostrarMensaje("Guardando…", "ok");
 
   try {
@@ -292,9 +421,111 @@ async function alternarHorario(idHorario, estabaSeleccionado) {
     } else {
       delete disponibilidades[personaSeleccionada][idHorario];
     }
-    renderizarTodo();
+    renderizarResultados();
+    renderizarDisponibilidad();
     mostrarMensaje("No se pudo guardar. Probá nuevamente.");
   }
+}
+
+async function agregarParticipante(evento) {
+  evento.preventDefault();
+  if (!firebaseDisponible) return mostrarMensajeAdministracion("Firebase todavía no está conectado.");
+
+  const nombre = inputParticipante.value.trim().replace(/\s+/g, " ");
+  if (nombre.length < 2) return mostrarMensajeAdministracion("Ingresá un nombre válido.");
+
+  const existente = Object.entries(configuracionRemota.participantes).find(
+    ([, participante]) => normalizarTexto(participante.nombre) === normalizarTexto(nombre)
+  );
+
+  if (existente?.[1]?.activo === true) {
+    return mostrarMensajeAdministracion("Ese participante ya está activo.");
+  }
+
+  const id = existente?.[0] || crearIdParticipante(nombre);
+  const orden = existente?.[1]?.orden ?? siguienteOrden(configuracionRemota.participantes);
+
+  try {
+    await apiBaseDeDatos.set(apiBaseDeDatos.ref(baseDeDatos, `${rutaConfiguracion()}/participantes/${id}`), {
+      nombre,
+      activo: true,
+      orden,
+    });
+    inputParticipante.value = "";
+    mostrarMensajeAdministracion("Participante agregado. Sus votos anteriores se conservaron.", "ok");
+  } catch (error) {
+    console.error("No se pudo agregar el participante:", error);
+    mostrarMensajeAdministracion("No se pudo agregar el participante. Revisá las reglas de Firebase.");
+  }
+}
+
+async function agregarHora(evento) {
+  evento.preventDefault();
+  if (!firebaseDisponible) return mostrarMensajeAdministracion("Firebase todavía no está conectado.");
+
+  const etiqueta = inputHora.value;
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(etiqueta)) {
+    return mostrarMensajeAdministracion("Elegí una hora válida.");
+  }
+
+  const id = idDeHora(etiqueta);
+  if (configuracionRemota.horas[id]?.activo === true) {
+    return mostrarMensajeAdministracion("Ese horario ya está activo.");
+  }
+
+  try {
+    await apiBaseDeDatos.set(apiBaseDeDatos.ref(baseDeDatos, `${rutaConfiguracion()}/horas/${id}`), {
+      etiqueta,
+      activo: true,
+      orden: minutosDeHora(etiqueta),
+    });
+    inputHora.value = "";
+    mostrarMensajeAdministracion("Horario agregado. Sus votos anteriores se conservaron.", "ok");
+  } catch (error) {
+    console.error("No se pudo agregar el horario:", error);
+    mostrarMensajeAdministracion("No se pudo agregar el horario. Revisá las reglas de Firebase.");
+  }
+}
+
+async function desactivarParticipante(id) {
+  try {
+    await apiBaseDeDatos.set(
+      apiBaseDeDatos.ref(baseDeDatos, `${rutaConfiguracion()}/participantes/${id}/activo`),
+      false
+    );
+    mostrarMensajeAdministracion("Participante oculto; sus votos siguen guardados.", "ok");
+  } catch (error) {
+    console.error("No se pudo quitar el participante:", error);
+    mostrarMensajeAdministracion("No se pudo quitar el participante.");
+  }
+}
+
+async function desactivarHora(id) {
+  try {
+    await apiBaseDeDatos.set(
+      apiBaseDeDatos.ref(baseDeDatos, `${rutaConfiguracion()}/horas/${id}/activo`),
+      false
+    );
+    mostrarMensajeAdministracion("Horario oculto; sus votos siguen guardados.", "ok");
+  } catch (error) {
+    console.error("No se pudo quitar el horario:", error);
+    mostrarMensajeAdministracion("No se pudo quitar el horario.");
+  }
+}
+
+function seleccionarDiaMovil(idDia) {
+  diaMovilSeleccionado = idDia;
+  actualizarBotonesDias();
+  renderizarResultados();
+  renderizarDisponibilidad();
+}
+
+function actualizarBotonesDias() {
+  contenedorDiasMovil.querySelectorAll(".dia-movil").forEach((boton) => {
+    const estaActivo = boton.dataset.dia === diaMovilSeleccionado;
+    boton.classList.toggle("activo", estaActivo);
+    boton.setAttribute("aria-pressed", String(estaActivo));
+  });
 }
 
 function crearTablaBase(descripcion, dias) {
@@ -325,11 +556,6 @@ function crearTablaBase(descripcion, dias) {
   return tabla;
 }
 
-function obtenerDiasVisibles() {
-  if (!consultaMovil.matches) return DIAS;
-  return DIAS.filter(({ id }) => id === diaMovilSeleccionado);
-}
-
 function crearEncabezadoHora(hora) {
   const encabezado = document.createElement("th");
   encabezado.scope = "row";
@@ -340,76 +566,111 @@ function crearEncabezadoHora(hora) {
 
 function obtenerConteos() {
   const conteos = {};
-
-  PARTICIPANTES.forEach((participante) => {
+  const idsHorariosActivos = new Set(
+    DIAS.flatMap((dia) => horarios.map((hora) => `${dia.id}-${hora.id}`))
+  );
+  participantes.forEach((participante) => {
     const seleccion = disponibilidades[participante.id] || {};
-    Object.entries(seleccion).forEach(([idHorario, estaDisponible]) => {
-      if (!estaDisponible) return;
+    Object.entries(seleccion).forEach(([idHorario, disponible]) => {
+      if (!disponible || !idsHorariosActivos.has(idHorario)) return;
       conteos[idHorario] ||= { personas: [] };
       conteos[idHorario].personas.push(participante.nombre);
     });
   });
-
   return conteos;
 }
 
 function actualizarResumenResultados(conteos, maximo) {
-  const participantesQueRespondieron = PARTICIPANTES.filter((participante) =>
+  const participantesConHorarios = participantes.filter((participante) =>
     Object.values(disponibilidades[participante.id] || {}).some(Boolean)
   ).length;
 
   if (maximo === 0) {
-    resumenResultados.textContent = `${participantesQueRespondieron} de ${PARTICIPANTES.length} marcaron al menos un horario.`;
+    resumenResultados.textContent = `${participantesConHorarios} de ${participantes.length} marcaron al menos un horario.`;
     return;
   }
 
+  const idsHorariosActivos = new Set(
+    DIAS.flatMap((dia) => horarios.map((hora) => `${dia.id}-${hora.id}`))
+  );
   const mejores = Object.entries(conteos)
-    .filter(([, valor]) => valor.personas.length === maximo)
+    .filter(([id, valor]) => idsHorariosActivos.has(id) && valor.personas.length === maximo)
     .map(([id]) => nombreDelHorario(id));
-  const detalleMejores = mejores.slice(0, 2).join(" y ");
+  const detalle = mejores.slice(0, 2).join(" y ");
   const extras = mejores.length > 2 ? ` y ${mejores.length - 2} más` : "";
 
-  resumenResultados.textContent = `${participantesQueRespondieron} de ${PARTICIPANTES.length} marcaron horarios. Mejor coincidencia: ${detalleMejores}${extras} (${maximo}).`;
+  resumenResultados.textContent = `${participantesConHorarios} de ${participantes.length} marcaron horarios. Mejor coincidencia: ${detalle}${extras} (${maximo}).`;
 }
 
 function nombreDelHorario(idHorario) {
   const dia = DIAS.find(({ id }) => idHorario.startsWith(`${id}-`));
-  const hora = idHorario.slice((dia?.id.length || 0) + 1).replace("-", ":");
-  return `${dia?.nombre || "Horario"} ${hora}`;
+  const idHora = idHorario.slice((dia?.id.length || 0) + 1);
+  const hora = horarios.find(({ id }) => id === idHora);
+  return `${dia?.nombre || "Horario"} ${hora?.etiqueta || ""}`.trim();
 }
 
-function crearIdHorario(idDia, hora) {
-  return `${idDia}-${hora.replace(":", "-")}`;
+function obtenerDiasVisibles() {
+  if (!consultaMovil.matches) return DIAS;
+  return DIAS.filter(({ id }) => id === diaMovilSeleccionado);
 }
 
-function rutaSemana() {
-  return `grupos/${ID_GRUPO}/semanas/${claveFecha(semana)}/disponibilidades`;
+function compararPorOrdenYNombre(a, b) {
+  return (a.orden ?? 0) - (b.orden ?? 0) || a.nombre.localeCompare(b.nombre, "es");
 }
 
-function actualizarSemanaEnPantalla() {
-  const domingo = sumarDias(semana, 6);
-  const formato = new Intl.DateTimeFormat("es-UY", { day: "numeric", month: "long" });
-  rangoSemana.textContent = `${formato.format(semana)} al ${formato.format(domingo)}`;
+function crearIdParticipante(nombre) {
+  const base = normalizarTexto(nombre)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "participante";
+  return `${base}-${Date.now().toString(36).slice(-5)}`;
 }
 
-function obtenerLunes(fecha) {
-  const resultado = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 12);
-  const dia = resultado.getDay();
-  resultado.setDate(resultado.getDate() + (dia === 0 ? -6 : 1 - dia));
-  return resultado;
+function normalizarTexto(texto) {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 }
 
-function sumarDias(fecha, cantidad) {
-  const resultado = new Date(fecha);
-  resultado.setDate(resultado.getDate() + cantidad);
-  return resultado;
+function idDeHora(hora) {
+  return String(hora).replace(":", "-");
 }
 
-function claveFecha(fecha) {
-  const anio = fecha.getFullYear();
-  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-  const dia = String(fecha.getDate()).padStart(2, "0");
-  return `${anio}-${mes}-${dia}`;
+function minutosDeHora(hora) {
+  const [horas, minutos] = hora.split(":").map(Number);
+  return horas * 60 + minutos;
+}
+
+function siguienteOrden(elementos) {
+  return Math.max(-1, ...Object.values(elementos || {}).map((elemento) => Number(elemento?.orden) || 0)) + 1;
+}
+
+function rutaGrupo() {
+  return `grupos/${ID_GRUPO}`;
+}
+
+function rutaConfiguracion() {
+  return `${rutaGrupo()}/configuracion`;
+}
+
+function rutaDisponibilidad() {
+  return `${rutaGrupo()}/disponibilidades`;
+}
+
+function rutaSemanaAnterior() {
+  return `${rutaGrupo()}/semanas/${claveLunesActual()}/disponibilidades`;
+}
+
+function claveLunesActual() {
+  const fecha = new Date();
+  const lunes = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 12);
+  const dia = lunes.getDay();
+  lunes.setDate(lunes.getDate() + (dia === 0 ? -6 : 1 - dia));
+  const anio = lunes.getFullYear();
+  const mes = String(lunes.getMonth() + 1).padStart(2, "0");
+  const numeroDia = String(lunes.getDate()).padStart(2, "0");
+  return `${anio}-${mes}-${numeroDia}`;
 }
 
 function configuracionFirebaseCompleta() {
@@ -432,4 +693,9 @@ function actualizarEstado(texto, tipo = "") {
 function mostrarMensaje(texto, tipo = "error") {
   mensaje.textContent = texto;
   mensaje.className = `mensaje${tipo === "ok" ? " ok" : ""}`;
+}
+
+function mostrarMensajeAdministracion(texto, tipo = "error") {
+  mensajeAdministracion.textContent = texto;
+  mensajeAdministracion.className = `mensaje${tipo === "ok" ? " ok" : ""}`;
 }

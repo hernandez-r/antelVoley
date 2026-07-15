@@ -5,6 +5,28 @@
     "grupos": {
       "antel-voley": {
         ".read": true,
+        "configuracion": {
+          "participantes": {
+            "$persona": {
+              ".write": true,
+              ".validate": "newData.hasChildren(['nombre', 'activo', 'orden']) && newData.child('nombre').isString() && newData.child('nombre').val().length >= 2 && newData.child('nombre').val().length <= 40 && newData.child('activo').isBoolean() && newData.child('orden').isNumber()"
+            }
+          },
+          "horas": {
+            "$hora": {
+              ".write": true,
+              ".validate": "newData.hasChildren(['etiqueta', 'activo', 'orden']) && newData.child('etiqueta').isString() && newData.child('etiqueta').val().length == 5 && newData.child('activo').isBoolean() && newData.child('orden').isNumber()"
+            }
+          }
+        },
+        "disponibilidades": {
+          "$persona": {
+            "$horario": {
+              ".write": "newData.val() === true || !newData.exists()",
+              ".validate": "newData.isBoolean() && newData.val() === true"
+            }
+          }
+        },
         "semanas": {
           "$semana": {
             "disponibilidades": {

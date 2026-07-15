@@ -27,6 +27,7 @@ body {
 }
 
 button,
+input,
 select {
   font: inherit;
 }
@@ -99,12 +100,6 @@ h2 {
   margin-bottom: 0;
   color: var(--texto-suave);
   font-size: 0.94rem;
-}
-
-.navegacion-semana {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .navegador-dias-movil {
@@ -344,6 +339,92 @@ h2 {
   font-size: 0.88rem;
 }
 
+.administracion details {
+  border: 0;
+}
+
+.administracion summary {
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.administracion summary::marker {
+  color: var(--primario);
+}
+
+.ayuda-administracion {
+  margin-top: 10px;
+}
+
+.dashboard {
+  display: grid;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.dashboard h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.form-administracion {
+  display: grid;
+  gap: 7px;
+  font-weight: 800;
+}
+
+.fila-formulario {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.fila-formulario input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+  color: var(--texto);
+  background: #fbfdfc;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.lista-administracion {
+  display: grid;
+  gap: 7px;
+  padding: 0;
+  margin: 14px 0 0;
+  list-style: none;
+}
+
+.item-administracion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  background: #f7faf9;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.boton.quitar {
+  min-height: 36px;
+  padding: 6px 10px;
+  color: var(--alerta);
+  background: #ffffff;
+  border-color: #d9a18e;
+  font-size: 0.85rem;
+}
+
+.boton.quitar:hover {
+  color: #ffffff;
+  background: var(--alerta);
+  border-color: var(--alerta);
+}
+
 @media (max-width: 719px) {
   .contenedor {
     padding: 12px 10px 30px;
@@ -357,10 +438,6 @@ h2 {
     margin-top: 12px;
     padding: 14px;
     border-radius: 10px;
-  }
-
-  .navegacion-semana .boton {
-    flex: 1 1 auto;
   }
 
   .grilla th,
@@ -393,6 +470,10 @@ h2 {
 
   .grilla {
     min-width: 820px;
+  }
+
+  .dashboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .controles,
