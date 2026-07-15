@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Antel Voley: una app simple para organizar partidos de voley entre amigos."
+      content="Antel Voley: planificador semanal para encontrar el mejor horario entre todos."
     />
     <title>Antel Voley</title>
     <link rel="stylesheet" href="css/style.css" />
@@ -13,54 +13,64 @@
   <body>
     <main class="contenedor">
       <header class="encabezado">
-        <p class="etiqueta">Organizador local</p>
+        <p class="etiqueta">Planificador semanal</p>
         <h1>Antel Voley</h1>
-        <p class="descripcion">Para ponernos de acuerdo</p>
+        <p class="descripcion">Encontramos el horario en el que podemos más.</p>
       </header>
 
-      <section class="panel" aria-labelledby="titulo-nombre">
+      <section class="panel controles" aria-labelledby="titulo-semana">
         <div>
-          <h2 id="titulo-nombre">Tu nombre</h2>
-          <p class="texto-ayuda">Se guarda solo en este navegador.</p>
+          <h2 id="titulo-semana">Semana</h2>
+          <p id="rango-semana" class="texto-ayuda"></p>
         </div>
-
-        <label class="campo">
-          <span>Nombre</span>
-          <input
-            id="nombre"
-            type="text"
-            autocomplete="name"
-            placeholder="Ej: Rodrigo"
-          />
+        <div class="navegacion-semana" aria-label="Cambiar semana">
+          <button id="semana-anterior" class="boton secundario compacto" type="button">
+            <span aria-hidden="true">←</span> Anterior
+          </button>
+          <button id="semana-actual" class="boton secundario compacto" type="button">Esta semana</button>
+          <button id="semana-siguiente" class="boton secundario compacto" type="button">
+            Siguiente <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <label class="selector-dia-movil" for="dia-visible">
+          <span>Día visible</span>
+          <select id="dia-visible"></select>
         </label>
       </section>
 
-      <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
-
-      <section class="panel" aria-labelledby="titulo-horarios">
-        <div>
-          <h2 id="titulo-horarios">Horarios posibles</h2>
-          <p class="texto-ayuda">Marcá cuándo podés jugar.</p>
-        </div>
-
-        <div id="lista-horarios" class="grilla-horarios"></div>
-      </section>
-
-      <section class="panel resumen" aria-labelledby="titulo-resumen">
-        <div class="resumen-cabecera">
+      <section class="panel" aria-labelledby="titulo-resultados">
+        <div class="cabecera-seccion">
           <div>
-            <h2 id="titulo-resumen">Tu disponibilidad</h2>
-            <p id="contador" class="texto-ayuda">Todavía no marcaste horarios.</p>
+            <h2 id="titulo-resultados">Coincidencias</h2>
+            <p id="resumen-resultados" class="texto-ayuda">Conectando con el grupo…</p>
           </div>
-          <button id="copiar-resumen" class="boton secundario" type="button">
-            Copiar resumen
-          </button>
+          <span id="estado-conexion" class="estado" role="status" aria-live="polite">Conectando</span>
+        </div>
+        <div id="resultados" class="grilla-contenedor" aria-live="polite"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="titulo-persona">
+        <div>
+          <h2 id="titulo-persona">Tu disponibilidad</h2>
+          <p class="texto-ayuda">Elegí tu nombre antes de marcar horarios.</p>
         </div>
 
-        <ul id="seleccionados" class="lista-seleccionados"></ul>
+        <label class="campo" for="persona">
+          <span>¿Quién sos?</span>
+          <select id="persona">
+            <option value="">Seleccioná tu nombre</option>
+          </select>
+        </label>
+
+        <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
+        <div id="disponibilidad" class="grilla-contenedor"></div>
       </section>
+
+      <footer class="pie">
+        Los cambios se comparten automáticamente con todo el grupo.
+      </footer>
     </main>
 
-    <script src="js/app.js"></script>
+    <script type="module" src="js/app.js"></script>
   </body>
 </html>

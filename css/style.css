@@ -1,14 +1,16 @@
 :root {
-  --fondo: #f4f7f6;
+  --fondo: #f2f6f5;
   --panel: #ffffff;
-  --texto: #18211f;
-  --texto-suave: #5d6b67;
+  --texto: #17211f;
+  --texto-suave: #61706c;
   --primario: #087f5b;
   --primario-oscuro: #056147;
   --primario-claro: #dff6ef;
-  --borde: #dce5e2;
-  --alerta: #9f3412;
-  --sombra: 0 16px 45px rgba(20, 40, 36, 0.11);
+  --borde: #d8e3e0;
+  --alerta: #a33a17;
+  --destacado: #fff3bf;
+  --destacado-borde: #e1a900;
+  --sombra: 0 16px 45px rgba(20, 40, 36, 0.09);
 }
 
 * {
@@ -18,32 +20,39 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--fondo);
   color: var(--texto);
+  background: var(--fondo);
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.5;
 }
 
 button,
-input {
+select {
   font: inherit;
 }
 
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(8, 127, 91, 0.24);
+  outline-offset: 2px;
+}
+
 .contenedor {
-  width: min(100%, 760px);
+  width: min(100%, 1180px);
   margin: 0 auto;
   padding: 24px 16px 40px;
 }
 
 .encabezado {
-  padding: 18px 2px 8px;
+  padding: 18px 2px 10px;
 }
 
 .etiqueta {
   margin: 0 0 8px;
   color: var(--primario);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -55,105 +64,68 @@ p {
 
 h1 {
   margin-bottom: 8px;
-  font-size: clamp(2.25rem, 12vw, 4rem);
+  font-size: clamp(2.4rem, 9vw, 4.5rem);
   line-height: 1;
 }
 
 h2 {
   margin-bottom: 4px;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
 }
 
 .descripcion {
   margin-bottom: 0;
   color: var(--texto-suave);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
 }
 
 .panel {
   margin-top: 18px;
   padding: 18px;
+  overflow: hidden;
   background: var(--panel);
   border: 1px solid var(--borde);
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: var(--sombra);
+}
+
+.controles,
+.cabecera-seccion {
+  display: grid;
+  gap: 14px;
 }
 
 .texto-ayuda {
   margin-bottom: 0;
   color: var(--texto-suave);
-  font-size: 0.95rem;
+  font-size: 0.94rem;
 }
 
-.campo {
-  display: grid;
+.navegacion-semana {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 16px;
-  font-weight: 700;
 }
 
-.campo input {
+.selector-dia-movil {
+  display: grid;
+  gap: 6px;
+  font-weight: 800;
+}
+
+.selector-dia-movil select {
   width: 100%;
   min-height: 48px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   color: var(--texto);
   background: #fbfdfc;
   border: 1px solid var(--borde);
   border-radius: 8px;
-  outline: none;
-}
-
-.campo input:focus {
-  border-color: var(--primario);
-  box-shadow: 0 0 0 3px rgba(8, 127, 91, 0.16);
-}
-
-.mensaje {
-  min-height: 24px;
-  margin: 12px 2px 0;
-  color: var(--alerta);
-  font-weight: 700;
-}
-
-.mensaje.ok {
-  color: var(--primario-oscuro);
-}
-
-.grilla-horarios {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.tarjeta-horario {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  padding: 14px;
-  background: #fbfdfc;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-}
-
-.tarjeta-horario.seleccionado {
-  background: var(--primario-claro);
-  border-color: var(--primario);
-}
-
-.dia {
-  display: block;
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.hora {
-  color: var(--texto-suave);
-  font-weight: 700;
 }
 
 .boton {
-  min-height: 46px;
-  padding: 11px 14px;
+  min-height: 44px;
+  padding: 10px 14px;
   color: #ffffff;
   background: var(--primario);
   border: 1px solid var(--primario);
@@ -162,82 +134,245 @@ h2 {
   font-weight: 800;
 }
 
-.boton:hover,
-.boton:focus-visible {
+.boton:hover {
   background: var(--primario-oscuro);
   border-color: var(--primario-oscuro);
-}
-
-.boton:focus-visible {
-  outline: 3px solid rgba(8, 127, 91, 0.24);
-  outline-offset: 2px;
 }
 
 .boton.secundario {
   color: var(--primario-oscuro);
   background: #ffffff;
-  border-color: var(--primario);
 }
 
-.boton.secundario:hover,
-.boton.secundario:focus-visible {
+.boton.secundario:hover {
   color: #ffffff;
   background: var(--primario-oscuro);
 }
 
-.boton.desmarcar {
+.boton.compacto {
+  min-height: 40px;
+  padding: 8px 11px;
+  font-size: 0.9rem;
+}
+
+.estado {
+  align-self: start;
+  width: max-content;
+  padding: 5px 10px;
+  color: #6c4f00;
+  background: #fff3bf;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.estado.conectado {
   color: var(--primario-oscuro);
-  background: #ffffff;
+  background: var(--primario-claro);
 }
 
-.resumen-cabecera {
-  display: grid;
-  gap: 14px;
+.estado.error {
+  color: #8d2d0f;
+  background: #ffe4da;
 }
 
-.lista-seleccionados {
+.campo {
   display: grid;
-  gap: 10px;
-  padding: 0;
-  margin: 16px 0 0;
-  list-style: none;
+  gap: 8px;
+  max-width: 440px;
+  margin-top: 16px;
+  font-weight: 800;
 }
 
-.item-seleccionado {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  padding: 12px;
+.campo select {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 42px 11px 14px;
+  color: var(--texto);
   background: #fbfdfc;
   border: 1px solid var(--borde);
   border-radius: 8px;
 }
 
-.item-seleccionado strong {
+.mensaje {
+  min-height: 24px;
+  margin: 12px 0 0;
+  color: var(--alerta);
+  font-weight: 700;
+}
+
+.mensaje.ok {
+  color: var(--primario-oscuro);
+}
+
+.grilla-contenedor {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: 9px;
+}
+
+.grilla {
+  width: 100%;
+  min-width: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.grilla th,
+.grilla td {
+  padding: 8px;
+  text-align: center;
+  border-right: 1px solid var(--borde);
+  border-bottom: 1px solid var(--borde);
+}
+
+.grilla tr:last-child td,
+.grilla tr:last-child th {
+  border-bottom: 0;
+}
+
+.grilla th:last-child,
+.grilla td:last-child {
+  border-right: 0;
+}
+
+.grilla thead th {
+  padding: 11px 8px;
+  background: #eef5f3;
+  font-size: 0.9rem;
+}
+
+.grilla .encabezado-hora {
+  width: 78px;
+  background: #f7faf9;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.resultado-celda {
+  min-height: 65px;
+  padding: 7px;
+  background: #f7faf9;
+  border: 1px solid transparent;
+  border-radius: 7px;
+}
+
+.resultado-celda.mejor {
+  background: var(--destacado);
+  border-color: var(--destacado-borde);
+}
+
+.cantidad {
   display: block;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1.1;
 }
 
-.vacio {
-  margin: 0;
+.nombres {
+  display: block;
+  margin-top: 4px;
   color: var(--texto-suave);
+  font-size: 0.72rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
-@media (min-width: 620px) {
+.celda-disponibilidad {
+  width: 100%;
+  min-height: 54px;
+  color: var(--texto-suave);
+  background: #f7faf9;
+  border: 1px solid var(--borde);
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.celda-disponibilidad:hover:not(:disabled) {
+  border-color: var(--primario);
+}
+
+.celda-disponibilidad.seleccionada {
+  color: var(--primario-oscuro);
+  background: var(--primario-claro);
+  border-color: var(--primario);
+}
+
+.celda-disponibilidad:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.aviso-configuracion {
+  margin: 0;
+  padding: 16px;
+  color: #704f00;
+  background: #fff8d8;
+}
+
+.pie {
+  padding: 22px 2px 0;
+  color: var(--texto-suave);
+  text-align: center;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 719px) {
   .contenedor {
-    padding-top: 44px;
+    padding: 12px 10px 30px;
+  }
+
+  .encabezado {
+    padding-top: 12px;
+  }
+
+  .panel {
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .navegacion-semana .boton {
+    flex: 1 1 auto;
+  }
+
+  .grilla th,
+  .grilla td {
+    padding: 7px;
+  }
+
+  .grilla .encabezado-hora {
+    width: 72px;
+  }
+
+  .resultado-celda,
+  .celda-disponibilidad {
+    min-height: 60px;
+  }
+}
+
+@media (min-width: 720px) {
+  .contenedor {
+    padding-top: 40px;
   }
 
   .panel {
     padding: 22px;
   }
 
-  .grilla-horarios {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .selector-dia-movil {
+    display: none;
   }
 
-  .tarjeta-horario,
-  .item-seleccionado,
-  .resumen-cabecera {
+  .grilla {
+    min-width: 820px;
+  }
+
+  .controles,
+  .cabecera-seccion {
     grid-template-columns: 1fr auto;
     align-items: center;
   }

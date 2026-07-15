@@ -1,0 +1,23 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "grupos": {
+      "antel-voley": {
+        ".read": true,
+        "semanas": {
+          "$semana": {
+            "disponibilidades": {
+              "$persona": {
+                "$horario": {
+                  ".write": "newData.val() === true || !newData.exists()",
+                  ".validate": "newData.isBoolean() && newData.val() === true"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
