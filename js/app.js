@@ -10,7 +10,7 @@ const VERSION_FIREBASE = "12.15.0";
 const CLAVE_PERSONA = "antelVoleyPersona";
 
 const selectorPersona = document.querySelector("#persona");
-const selectorDia = document.querySelector("#dia-visible");
+const contenedorDiasMovil = document.querySelector("#dias-movil");
 const contenedorResultados = document.querySelector("#resultados");
 const contenedorDisponibilidad = document.querySelector("#disponibilidad");
 const resumenResultados = document.querySelector("#resumen-resultados");
@@ -21,6 +21,7 @@ const consultaMovil = window.matchMedia("(max-width: 719px)");
 
 let semana = obtenerLunes(new Date());
 let personaSeleccionada = "";
+let diaMovilSeleccionado = "";
 let disponibilidades = {};
 let baseDeDatos = null;
 let apiBaseDeDatos = null;
@@ -61,13 +62,19 @@ function cargarParticipantes() {
   const idDiaActual = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"][
     new Date().getDay()
   ];
+  diaMovilSeleccionado = DIAS.some(({ id }) => id === idDiaActual) ? idDiaActual : DIAS[0]?.id || "";
+
   DIAS.forEach((dia) => {
-    const opcion = document.createElement("option");
-    opcion.value = dia.id;
-    opcion.textContent = dia.nombre;
-    selectorDia.appendChild(opcion);
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "dia-movil";
+    boton.dataset.dia = dia.id;
+    boton.textContent = dia.nombre.slice(0, 3);
+    boton.setAttribute("aria-label", `Mostrar ${dia.nombre}`);
+    boton.addEventListener("click", () => seleccionarDiaMovil(dia.id));
+    contenedorDiasMovil.appendChild(boton);
   });
-  selectorDia.value = DIAS.some(({ id }) => id === idDiaActual) ? idDiaActual : DIAS[0]?.id || "";
+  actualizarBotonesDias();
 }
 
 function configurarEventos() {
@@ -85,7 +92,6 @@ function configurarEventos() {
     renderizarDisponibilidad();
   });
 
-  selectorDia.addEventListener("change", renderizarTodo);
   consultaMovil.addEventListener("change", renderizarTodo);
 
   document.querySelector("#semana-anterior").addEventListener("click", () => cambiarSemana(-7));
@@ -162,6 +168,20 @@ function cambiarSemana(cantidadDias) {
 function renderizarTodo() {
   renderizarResultados();
   renderizarDisponibilidad();
+}
+
+function seleccionarDiaMovil(idDia) {
+  diaMovilSeleccionado = idDia;
+  actualizarBotonesDias();
+  renderizarTodo();
+}
+
+function actualizarBotonesDias() {
+  contenedorDiasMovil.querySelectorAll(".dia-movil").forEach((boton) => {
+    const estaActivo = boton.dataset.dia === diaMovilSeleccionado;
+    boton.classList.toggle("activo", estaActivo);
+    boton.setAttribute("aria-pressed", String(estaActivo));
+  });
 }
 
 function renderizarResultados() {
@@ -307,7 +327,7 @@ function crearTablaBase(descripcion, dias) {
 
 function obtenerDiasVisibles() {
   if (!consultaMovil.matches) return DIAS;
-  return DIAS.filter(({ id }) => id === selectorDia.value);
+  return DIAS.filter(({ id }) => id === diaMovilSeleccionado);
 }
 
 function crearEncabezadoHora(hora) {

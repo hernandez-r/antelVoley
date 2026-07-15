@@ -8,7 +8,7 @@ Planificador semanal estático para encontrar el horario con mayor disponibilida
 - Desplegable cerrado de participantes.
 - Solo permite marcar después de elegir un nombre.
 - Resultados conjuntos visibles en todo momento.
-- Vista móvil de un día por vez, sin desplazamiento horizontal.
+- Barra móvil con acceso directo a los siete días; ambas grillas cambian juntas.
 - Resalta automáticamente los horarios con mayor coincidencia.
 - Navegación entre semanas.
 - Actualización en vivo para todos los dispositivos conectados.
