@@ -7,6 +7,8 @@ export const PARTICIPANTES = [
   { id: "martin", nombre: "Martín" },
   { id: "daniel", nombre: "Daniel" },
   { id: "ivanna", nombre: "Ivanna" },
+  { id: "cecilia", nombre: "Cecilia" },
+  { id: "johana", nombre: "Johana" },
 ];
 
 export const DIAS = [
